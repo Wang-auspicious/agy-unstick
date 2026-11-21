@@ -1,0 +1,32 @@
+{
+  "cmd-hang-guard": {
+    "enabled": true,
+    "PreToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./scripts/cmd-guard-hook.js",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "cmd-hang-audit": {
+    "enabled": true,
+    "PostToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./scripts/cmd-audit-hook.js",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

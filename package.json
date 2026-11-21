@@ -1,0 +1,19 @@
+{
+  "name": "agy-unstick",
+  "version": "0.1.0",
+  "description": "Anti-hang PreToolUse guardrail, detached launcher, timeout runner, and Empty-log forensics plugin for Google Antigravity.",
+  "license": "MIT",
+  "bin": {
+    "agy-safe-launch": "./tools/safe-launch/cli.js",
+    "agy-safe-run": "./tools/safe-run/cli.js",
+    "agy-task-doctor": "./tools/task-doctor/cli.js"
+  },
+  "scripts": {
+    "test": "node --test test/run-tests.js",
+    "install-plugin": "node ./install.js --copy",
+    "scan": "node ./tools/task-doctor/cli.js scan --days 7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

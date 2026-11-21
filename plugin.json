@@ -1,0 +1,13 @@
+{
+  "name": "agy-unstick",
+  "displayName": "AGY Unstick — Antigravity 防卡死与后台任务护栏",
+  "version": "0.1.0",
+  "description": "消除 Windows PowerShell Start-Process 管道继承引发的 Empty log 后台任务永挂死、交互阻塞与失控 Watcher 的 Antigravity 原生防卡死插件：提供 PreToolUse 命令护栏、完全脱钩并发射器（safe-launch）、超时树杀运行器（safe-run）与历史卡死取证诊断（task-doctor）。",
+  "logo": "assets/logo.svg",
+  "disabled": false,
+  "suggestedPrompts": [
+    "用 task-doctor scan 扫描我最近 7 天 Antigravity 会话里的 Empty log 和后台卡死任务",
+    "用 safe-launch 安全分离启动本地桌面端/开发服务并等待端口就绪",
+    "用 safe-run 带超时和进程树清理运行可能卡住的命令"
+  ]
+}
