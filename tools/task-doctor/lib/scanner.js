@@ -34,11 +34,12 @@ function classifyHangCause(commandLine, isDaemon) {
 
 function parseTranscript(transcriptPath) {
   const commands = [];
+  const taskToCommand = new Map();
   const canceled = new Map();
   if (!fs.existsSync(transcriptPath)) {
-    return { commands, canceled };
+    return { commands, taskToCommand, canceled };
   }
-  const raw = fs.readFileSync(transcriptPath, 'utf8');
+  const raw = fs.readFileSync(transcriptPath, 'utf8').replace(/^\uFEFF/, '');
   const lines = raw.split(/\r?\n/);
 
   for (const line of lines) {
@@ -64,13 +65,29 @@ function parseTranscript(transcriptPath) {
     }
 
     const content = typeof step.content === 'string' ? step.content : '';
+    const bgMatch = content.match(/with task id:\s*[^\s"'\/]+\/(task-[0-9A-Za-z_-]+)/i);
+    if (bgMatch) {
+      const tid = bgMatch[1];
+      const descMatch = content.match(/Task Description:\s*([\s\S]+?)(?:\r?\n(?:Task logs|Log output|YOU MUST|Log:)|$)/i);
+      const descText = descMatch ? descMatch[1].trim() : '';
+      const descNorm = descText.replace(/\s+/g, ' ').slice(0, 48);
+      const matchedCmd = descNorm
+        ? commands.slice().reverse().find((c) => c.commandLine.replace(/\s+/g, ' ').trim().startsWith(descNorm))
+        : null;
+      const fallbackRecent = matchedCmd || (commands.length > 0 ? commands[commands.length - 1] : null);
+      taskToCommand.set(tid, {
+        commandLine: matchedCmd ? matchedCmd.commandLine : (descText || (fallbackRecent ? fallbackRecent.commandLine : '')),
+        isDaemon: matchedCmd ? matchedCmd.isDaemon : false,
+      });
+    }
+
     const cancelRegex = /Task id\s+"[^"]*\/(task-[^"]+)"\s+was canceled/gi;
     let match;
     while ((match = cancelRegex.exec(content)) !== null) {
       canceled.set(match[1], true);
     }
   }
-  return { commands, canceled };
+  return { commands, taskToCommand, canceled };
 }
 
 function scanSession(sessionDir) {
@@ -94,7 +111,7 @@ function scanSession(sessionDir) {
     return null;
   }
 
-  const { commands, canceled: canceledMap } = parseTranscript(transcriptPath);
+  const { commands, taskToCommand, canceled: canceledMap } = parseTranscript(transcriptPath);
   const findings = [];
 
   for (const tf of taskFiles) {
@@ -105,11 +122,10 @@ function scanSession(sessionDir) {
     const isCanceled = canceledMap.has(taskId);
     if (!isEmptyLog && !isCanceled) continue;
 
-    // Best-effort match to the closest suspicious run_command in the session.
-    const likelyCmd =
-      commands.find((c) => classifyHangCause(c.commandLine, c.isDaemon) !== 'unflushed_or_timeout') ||
-      commands[commands.length - 1] ||
-      null;
+    // Prefer exact task-id correlation, falling back to last known run_command.
+    const exactCmd = taskToCommand.get(taskId) || null;
+    const fallbackCmd = commands.length > 0 ? commands[commands.length - 1] : null;
+    const likelyCmd = exactCmd || fallbackCmd;
 
     findings.push({
       sessionId,

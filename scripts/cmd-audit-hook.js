@@ -16,7 +16,7 @@ function readStdin() {
 
 async function main() {
   try {
-    const raw = await readStdin();
+    const raw = (await readStdin()).replace(/^\uFEFF/, '');
     if (raw && raw.trim()) {
       const payload = JSON.parse(raw);
       const tc = (payload && payload.toolCall) || {};

@@ -206,7 +206,7 @@ function evaluateCommand(payload) {
 
 async function main() {
   try {
-    const raw = await readStdin();
+    const raw = (await readStdin()).replace(/^\uFEFF/, '');
     if (!raw || !raw.trim()) {
       return allow();
     }

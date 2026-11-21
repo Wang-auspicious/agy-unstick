@@ -76,8 +76,24 @@ test('cmd-guard-hook allows safe builds, Start-Process -Wait, short sleeps, IsDa
   }
 });
 
-test('cmd-guard-hook CLI process fails open on malformed stdin JSON', () => {
+test('cmd-guard-hook CLI process handles UTF-8 BOM and fails open on malformed stdin JSON', () => {
   const hookPath = path.resolve(__dirname, '../scripts/cmd-guard-hook.js');
+  const bomInput =
+    '\uFEFF' +
+    JSON.stringify({
+      toolCall: {
+        name: 'run_command',
+        args: { CommandLine: 'Start-Process app.exe', IsDaemon: false },
+      },
+    });
+  const bomRes = spawnSync(process.execPath, [hookPath], {
+    input: bomInput,
+    encoding: 'utf8',
+    windowsHide: true,
+  });
+  assert.equal(bomRes.status, 0);
+  assert.equal(JSON.parse(bomRes.stdout.trim()).decision, 'deny');
+
   const res = spawnSync(process.execPath, [hookPath], {
     input: '{not valid json',
     encoding: 'utf8',
